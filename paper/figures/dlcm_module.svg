@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 700 380" width="700" height="380">
+  <defs>
+    <style>
+      .title { font: bold 16px Arial; fill: #1a1a2e; }
+      .module { font: bold 12px Arial; fill: white; }
+      .label { font: 11px Arial; fill: #333; }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+    <linearGradient id="grad-input" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#607D8B"/>
+      <stop offset="100%" style="stop-color:#78909C"/>
+    </linearGradient>
+    <linearGradient id="grad-max" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#F44336"/>
+      <stop offset="100%" style="stop-color:#EF5350"/>
+    </linearGradient>
+    <linearGradient id="grad-avg" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2196F3"/>
+      <stop offset="100%" style="stop-color:#42A5F5"/>
+    </linearGradient>
+    <linearGradient id="grad-contrast" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#9C27B0"/>
+      <stop offset="100%" style="stop-color:#AB47BC"/>
+    </linearGradient>
+    <linearGradient id="grad-output" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4CAF50"/>
+      <stop offset="100%" style="stop-color:#66BB6A"/>
+    </linearGradient>
+  </defs>
+  
+  <rect width="700" height="380" fill="#fafafa"/>
+  <text x="350" y="30" text-anchor="middle" class="title">DLCM: Deep Local Contrast Module</text>
+  
+  <g transform="translate(30, 80)">
+    <rect x="0" y="50" width="80" height="60" rx="5" fill="url(#grad-input)" stroke="#455A64" stroke-width="2"/>
+    <text x="40" y="85" text-anchor="middle" class="module">X</text>
+    <text x="40" y="130" text-anchor="middle" class="label">Input Feature</text>
+  </g>
+  
+  <path d="M 110 110 L 160 60" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 110 110 L 160 160" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <g transform="translate(160, 30)">
+    <rect x="0" y="0" width="100" height="60" rx="5" fill="url(#grad-max)" stroke="#D32F2F" stroke-width="2"/>
+    <text x="50" y="25" text-anchor="middle" class="module">MaxPool</text>
+    <text x="50" y="42" text-anchor="middle" style="font: 10px Arial; fill: white;">3x3</text>
+    <text x="50" y="75" text-anchor="middle" class="label">L_max</text>
+    <text x="50" y="90" text-anchor="middle" style="font: 10px Arial; fill: #666;">Target Intensity</text>
+  </g>
+  
+  <g transform="translate(160, 130)">
+    <rect x="0" y="0" width="100" height="60" rx="5" fill="url(#grad-avg)" stroke="#1976D2" stroke-width="2"/>
+    <text x="50" y="25" text-anchor="middle" class="module">AvgPool</text>
+    <text x="50" y="42" text-anchor="middle" style="font: 10px Arial; fill: white;">9x9</text>
+    <text x="50" y="75" text-anchor="middle" class="label">mu_bg</text>
+    <text x="50" y="90" text-anchor="middle" style="font: 10px Arial; fill: #666;">Background Est.</text>
+  </g>
+  
+  <g transform="translate(310, 70)">
+    <rect x="0" y="0" width="120" height="80" rx="5" fill="url(#grad-contrast)" stroke="#7B1FA2" stroke-width="2"/>
+    <text x="60" y="25" text-anchor="middle" class="module">Contrast</text>
+    <text x="60" y="42" text-anchor="middle" class="module">Response</text>
+    <text x="60" y="62" text-anchor="middle" style="font: 10px Arial; fill: white;">L^2/(mu+eps)</text>
+    <text x="60" y="100" text-anchor="middle" class="label">C</text>
+  </g>
+  
+  <path d="M 260 60 L 310 90" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  <path d="M 260 160 L 310 130" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <g transform="translate(470, 70)">
+    <rect x="0" y="0" width="100" height="80" rx="5" fill="url(#grad-contrast)" stroke="#7B1FA2" stroke-width="2"/>
+    <text x="50" y="25" text-anchor="middle" class="module">Enhance</text>
+    <text x="50" y="42" text-anchor="middle" class="module">Conv</text>
+    <text x="50" y="62" text-anchor="middle" style="font: 10px Arial; fill: white;">+Sigmoid</text>
+    <text x="50" y="100" text-anchor="middle" class="label">C_enhanced</text>
+  </g>
+  
+  <path d="M 430 110 L 470 110" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <path d="M 70 140 L 70 240 L 600 240 L 600 180" stroke="#4CAF50" stroke-width="2" stroke-dasharray="5,5" fill="none"/>
+  <text x="300" y="260" text-anchor="middle" style="font: 11px Arial; fill: #4CAF50;">Skip Connection (Identity)</text>
+  
+  <g transform="translate(590, 140)">
+    <circle cx="25" cy="25" r="20" fill="url(#grad-output)" stroke="#388E3C" stroke-width="2"/>
+    <text x="25" y="30" text-anchor="middle" class="module">+</text>
+    <text x="25" y="65" text-anchor="middle" class="label">beta*C + X</text>
+  </g>
+  
+  <path d="M 570 110 L 590 150" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <g transform="translate(640, 120)">
+    <rect x="0" y="10" width="50" height="50" rx="5" fill="url(#grad-output)" stroke="#388E3C" stroke-width="2"/>
+    <text x="25" y="40" text-anchor="middle" class="module">X_out</text>
+  </g>
+  
+  <path d="M 630 165 L 640 155" stroke="#666" stroke-width="2" fill="none" marker-end="url(#arrowhead)"/>
+  
+  <g transform="translate(50, 290)">
+    <rect x="0" y="0" width="600" height="70" rx="8" fill="white" stroke="#9C27B0" stroke-width="2"/>
+    <text x="300" y="22" text-anchor="middle" class="title" style="fill: #9C27B0;">Local Contrast Enhancement</text>
+    <text x="300" y="48" text-anchor="middle" style="font: 14px Times; fill: #333;">X_out = X + beta * (sigmoid(Conv(C)) * C)</text>
+    <text x="300" y="65" text-anchor="middle" style="font: 11px Arial; fill: #666;">where C = L_max^2 / (mu_bg + eps) and beta is learnable</text>
+  </g>
+</svg>

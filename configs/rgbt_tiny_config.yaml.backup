@@ -1,0 +1,141 @@
+# OSFormer RGBT-Tiny 数据集配置
+
+# 数据集配置
+data:
+  root_dir: /home/a7532/dataset/RGBT-Tiny
+  num_workers: 4
+  modality: both  # 'rgb', 'thermal', 'both'
+  
+  # 自动跟踪配置（用于生成 tracking_id 和计算 offset）
+  tracking:
+    enabled: true           # 是否启用自动跟踪
+    iou_threshold: 0.3      # IoU 匹配阈值
+    distance_threshold: 0.1 # 中心距离阈值（归一化）
+    iou_weight: 0.7         # IoU 权重
+    distance_weight: 0.3    # 距离权重
+
+# 模型配置
+model:
+  num_frames: 5              # 输入视频帧数 T
+  frame_interval: 3          # 帧采样间隔 (1=密集采样, 3=推荐, 5=激进)
+  sample_frames: 3           # 采样帧数 S
+  img_size: 640              # 图像尺寸
+  num_classes: 7             # RGBT-Tiny有7个类别
+  embed_dim: 96              # VPA 嵌入维度
+  depths: [2, 2, 6, 2]       # VPA 各阶段深度
+  use_doppler: true          # 是否使用 Doppler 滤波
+  anchor_free: true          # 是否使用 anchor-free 检测
+  dropout: 0.1               # Dropout 概率
+
+# 类别配置
+classes:
+  names: ['ship', 'car', 'cyclist', 'pedestrian', 'bus', 'drone', 'plane']
+  # 类别权重（可选，用于处理类别不平衡）
+  weights: [1.0, 1.0, 1.0, 1.0, 1.0, 1.0, 1.0]
+
+# 训练配置
+train:
+  batch_size: 4              # 减小batch size适应多类别
+  num_epochs: 50
+  lr: 0.001                  # 学习率
+  weight_decay: 0.05         # 权重衰减
+  warmup_epochs: 5           # Warmup 轮数
+
+  # 优化器
+  optimizer: adamw
+  betas: [0.9, 0.999]
+
+  # 学习率调度
+  scheduler: cosine
+  min_lr: 0.00001
+
+  # 混合精度训练
+  amp: true
+
+  # 梯度裁剪（增加到 5.0 以提高数值稳定性）
+  clip_grad: 5.0
+
+  # 损失权重（多类别需要调整）
+  loss_weights:
+    cls: 1.0
+    bbox: 5.0
+    centerness: 1.0
+    offset: 2.0  # 启用 offset loss（通过自动 tracking_id 计算真实 offset）
+  
+  # 数值稳定性配置
+  nan_detection: true        # 是否检测并处理NaN
+  check_loss_interval: 100   # 每N个batch检查一次损失
+
+# 可视化配置
+visualize:
+  enabled: true               # 是否启用可视化
+  max_samples: 4             # 每次可视化最多样本数
+  score_thresh: 0.3          # 预测框显示阈值
+
+# 评估配置
+eval:
+  batch_size: 2              # 评估时batch size可以更小
+  eval_interval: 5           # 评估间隔（epoch）
+  score_thresh: 0.3          # 分数阈值
+  nms_thresh: 0.5            # NMS 阈值
+
+  # 评估指标
+  metrics:
+    - map50_95
+    - map50
+    - map75
+    - precision
+    - recall
+
+# 早退机制配置
+early_stopping:
+  enabled: true              # 是否启用早退
+  patience: 15               # 容忍的epoch数（15个epoch没有改进则停止）
+  min_delta: 0.001           # 最小改进量（小于此值视为没有改进）
+  metric: map50              # 监控的指标 (map50, map75, loss)
+  mode: max                  # 'max' 表示指标越大越好，'min' 表示越小越好
+
+# 保存配置
+save:
+  checkpoint_dir: ./checkpoints/rgbt_tiny
+  log_dir: ./logs/rgbt_tiny
+  tensorboard_dir: ./runs/rgbt_tiny  # TensorBoard 日志目录
+  save_interval: 10          # 保存间隔（epoch）
+  keep_last_k: 3             # 保留最近 k 个检查点
+  save_best: true            # 是否保存最佳模型
+  best_metric: map50         # 用于判断最佳模型的指标 (map50, map75, loss)
+
+# 可视化配置
+visualize:
+  enabled: true
+  vis_dir: ./visualizations/rgbt_tiny
+  num_vis: 10                # 可视化样本数
+  save_predictions: true     # 保存预测结果
+
+# 设备配置
+device: cuda
+seed: 42
+
+# 数据增强
+augmentation:
+  enabled: true
+  random_flip: 0.5
+  random_crop: false
+  color_jitter: 0.2
+  # 多尺度训练
+  multi_scale: true
+  scale_range: [0.8, 1.2]
+
+# 类别特定配置
+class_specific:
+  # 小目标类别（需要特殊处理）
+  small_objects: ['drone', 'cyclist']
+
+  # 困难类别（可能需要更多训练）
+  hard_classes: ['cyclist', 'pedestrian']
+
+  # 类别特定的损失权重
+  loss_weights:
+    drone: 2.0      # 无人机目标小，增加权重
+    cyclist: 1.5    # 骑行者较少，增加权重
+    pedestrian: 1.2 # 行人较多，保持正常权重

@@ -1,0 +1,12 @@
+# DeepSpeed Hostfile for Multi-Node Training
+# Format: hostname slots=num_gpus
+
+# Single node (4 GPUs)
+localhost slots=4
+
+# Example for multi-node setup:
+# node1 slots=4
+# node2 slots=4
+# node3 slots=4
+# node4 slots=4
+

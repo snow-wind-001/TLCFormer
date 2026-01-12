@@ -1,0 +1,185 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 600" width="1200" height="600">
+  <defs>
+    <style>
+      .title { font: bold 18px Arial; fill: #1a1a2e; }
+      .module { font: bold 14px Arial; fill: white; }
+      .label { font: 12px Arial; fill: #333; }
+      .arrow { stroke: #666; stroke-width: 2; fill: none; marker-end: url(#arrowhead); }
+      .data-arrow { stroke: #2196F3; stroke-width: 3; fill: none; marker-end: url(#arrowhead-blue); }
+    </style>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#666"/>
+    </marker>
+    <marker id="arrowhead-blue" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2196F3"/>
+    </marker>
+    <linearGradient id="grad-input" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#4CAF50"/>
+      <stop offset="100%" style="stop-color:#66BB6A"/>
+    </linearGradient>
+    <linearGradient id="grad-cube" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#2196F3"/>
+      <stop offset="100%" style="stop-color:#42A5F5"/>
+    </linearGradient>
+    <linearGradient id="grad-mada" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#FF5722"/>
+      <stop offset="100%" style="stop-color:#FF7043"/>
+    </linearGradient>
+    <linearGradient id="grad-dlcm" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#9C27B0"/>
+      <stop offset="100%" style="stop-color:#AB47BC"/>
+    </linearGradient>
+    <linearGradient id="grad-vpa" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#3F51B5"/>
+      <stop offset="100%" style="stop-color:#5C6BC0"/>
+    </linearGradient>
+    <linearGradient id="grad-neck" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#009688"/>
+      <stop offset="100%" style="stop-color:#26A69A"/>
+    </linearGradient>
+    <linearGradient id="grad-head" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" style="stop-color:#795548"/>
+      <stop offset="100%" style="stop-color:#8D6E63"/>
+    </linearGradient>
+  </defs>
+  
+  <rect width="1200" height="600" fill="#fafafa"/>
+  <text x="600" y="35" text-anchor="middle" class="title">TLCFormer: Temporal-Local-Contrast Transformer Architecture</text>
+  
+  <g transform="translate(30, 80)">
+    <rect x="0" y="0" width="100" height="60" rx="8" fill="url(#grad-input)" stroke="#388E3C" stroke-width="2"/>
+    <text x="50" y="25" text-anchor="middle" class="module">RGB</text>
+    <text x="50" y="42" text-anchor="middle" class="module">Frames</text>
+    <text x="50" y="75" text-anchor="middle" class="label">(B,T,3,H,W)</text>
+    
+    <rect x="0" y="120" width="100" height="60" rx="8" fill="url(#grad-input)" stroke="#388E3C" stroke-width="2"/>
+    <text x="50" y="145" text-anchor="middle" class="module">Thermal</text>
+    <text x="50" y="162" text-anchor="middle" class="module">Frames</text>
+    <text x="50" y="195" text-anchor="middle" class="label">(B,T,1,H,W)</text>
+  </g>
+  
+  <path d="M 130 110 L 170 160 L 180 160" class="data-arrow"/>
+  <path d="M 130 210 L 170 160 L 180 160" class="data-arrow"/>
+  
+  <g transform="translate(180, 120)">
+    <rect x="0" y="0" width="120" height="80" rx="8" fill="url(#grad-cube)" stroke="#1976D2" stroke-width="2"/>
+    <text x="60" y="35" text-anchor="middle" class="module">Cube</text>
+    <text x="60" y="55" text-anchor="middle" class="module">Encoding</text>
+    <text x="60" y="100" text-anchor="middle" class="label">(B,2,H,W,S)</text>
+  </g>
+  
+  <path d="M 300 160 L 340 160" class="data-arrow"/>
+  
+  <g transform="translate(340, 100)">
+    <rect x="0" y="0" width="140" height="120" rx="8" fill="url(#grad-mada)" stroke="#E64A19" stroke-width="2"/>
+    <text x="70" y="30" text-anchor="middle" class="module">MADA</text>
+    <text x="70" y="50" text-anchor="middle" style="font: 10px Arial; fill: white;">Motion-Aware</text>
+    <text x="70" y="65" text-anchor="middle" style="font: 10px Arial; fill: white;">Difference Attention</text>
+    <rect x="10" y="75" width="55" height="20" rx="3" fill="rgba(255,255,255,0.3)"/>
+    <text x="37" y="89" text-anchor="middle" style="font: 9px Arial; fill: white;">Frame Diff</text>
+    <rect x="75" y="75" width="55" height="20" rx="3" fill="rgba(255,255,255,0.3)"/>
+    <text x="102" y="89" text-anchor="middle" style="font: 9px Arial; fill: white;">Attention</text>
+    <text x="70" y="135" text-anchor="middle" class="label" style="fill: #333;">Suppress Static BG</text>
+  </g>
+  
+  <path d="M 480 160 L 520 160" class="data-arrow"/>
+  
+  <g transform="translate(520, 100)">
+    <rect x="0" y="0" width="140" height="120" rx="8" fill="url(#grad-dlcm)" stroke="#7B1FA2" stroke-width="2"/>
+    <text x="70" y="30" text-anchor="middle" class="module">DLCM</text>
+    <text x="70" y="50" text-anchor="middle" style="font: 10px Arial; fill: white;">Deep Local</text>
+    <text x="70" y="65" text-anchor="middle" style="font: 10px Arial; fill: white;">Contrast Module</text>
+    <rect x="10" y="75" width="55" height="20" rx="3" fill="rgba(255,255,255,0.3)"/>
+    <text x="37" y="89" text-anchor="middle" style="font: 9px Arial; fill: white;">MaxPool</text>
+    <rect x="75" y="75" width="55" height="20" rx="3" fill="rgba(255,255,255,0.3)"/>
+    <text x="102" y="89" text-anchor="middle" style="font: 9px Arial; fill: white;">AvgPool</text>
+    <text x="70" y="135" text-anchor="middle" class="label" style="fill: #333;">Enhance Contrast</text>
+  </g>
+  
+  <path d="M 660 160 L 700 160" class="data-arrow"/>
+  
+  <g transform="translate(700, 60)">
+    <rect x="0" y="0" width="160" height="200" rx="8" fill="url(#grad-vpa)" stroke="#303F9F" stroke-width="2"/>
+    <text x="80" y="25" text-anchor="middle" class="module">VPA Encoder</text>
+    <text x="80" y="42" text-anchor="middle" style="font: 10px Arial; fill: white;">w/ Hybrid Mixer</text>
+    <rect x="15" y="55" width="130" height="30" rx="4" fill="rgba(255,255,255,0.2)"/>
+    <text x="80" y="75" text-anchor="middle" style="font: 11px Arial; fill: white;">Stage 1 (96-ch)</text>
+    <rect x="15" y="90" width="130" height="30" rx="4" fill="rgba(255,255,255,0.2)"/>
+    <text x="80" y="110" text-anchor="middle" style="font: 11px Arial; fill: white;">Stage 2 (192-ch)</text>
+    <rect x="15" y="125" width="130" height="30" rx="4" fill="rgba(255,255,255,0.2)"/>
+    <text x="80" y="145" text-anchor="middle" style="font: 11px Arial; fill: white;">Stage 3 (384-ch)</text>
+    <rect x="15" y="160" width="130" height="30" rx="4" fill="rgba(255,255,255,0.2)"/>
+    <text x="80" y="180" text-anchor="middle" style="font: 11px Arial; fill: white;">Stage 4 (768-ch)</text>
+    <text x="80" y="220" text-anchor="middle" class="label" style="fill: #333;">Multi-scale Features</text>
+  </g>
+  
+  <path d="M 860 160 L 900 160" class="data-arrow"/>
+  
+  <g transform="translate(900, 110)">
+    <rect x="0" y="0" width="130" height="100" rx="8" fill="url(#grad-neck)" stroke="#00796B" stroke-width="2"/>
+    <text x="65" y="25" text-anchor="middle" class="module">FPN Neck</text>
+    <text x="65" y="45" text-anchor="middle" style="font: 10px Arial; fill: white;">Feature</text>
+    <text x="65" y="60" text-anchor="middle" style="font: 10px Arial; fill: white;">Refinement</text>
+    <rect x="15" y="70" width="100" height="20" rx="3" fill="rgba(255,255,255,0.3)"/>
+    <text x="65" y="84" text-anchor="middle" style="font: 9px Arial; fill: white;">BG Suppression</text>
+    <text x="65" y="125" text-anchor="middle" class="label" style="fill: #333;">Background Filter</text>
+  </g>
+  
+  <path d="M 1030 160 L 1070 160" class="data-arrow"/>
+  
+  <g transform="translate(1070, 90)">
+    <rect x="0" y="0" width="110" height="140" rx="8" fill="url(#grad-head)" stroke="#5D4037" stroke-width="2"/>
+    <text x="55" y="25" text-anchor="middle" class="module">Detection</text>
+    <text x="55" y="42" text-anchor="middle" class="module">Head</text>
+    <rect x="10" y="55" width="90" height="18" rx="3" fill="rgba(255,255,255,0.3)"/>
+    <text x="55" y="68" text-anchor="middle" style="font: 9px Arial; fill: white;">Classification</text>
+    <rect x="10" y="78" width="90" height="18" rx="3" fill="rgba(255,255,255,0.3)"/>
+    <text x="55" y="91" text-anchor="middle" style="font: 9px Arial; fill: white;">BBox Regression</text>
+    <rect x="10" y="101" width="90" height="18" rx="3" fill="rgba(255,255,255,0.3)"/>
+    <text x="55" y="114" text-anchor="middle" style="font: 9px Arial; fill: white;">Centerness</text>
+    <rect x="10" y="124" width="90" height="18" rx="3" fill="rgba(255,255,255,0.3)"/>
+    <text x="55" y="137" text-anchor="middle" style="font: 9px Arial; fill: white;">Offset</text>
+  </g>
+  
+  <g transform="translate(30, 320)">
+    <rect x="0" y="0" width="1140" height="250" rx="10" fill="#f5f5f5" stroke="#ddd" stroke-width="1"/>
+    <text x="570" y="25" text-anchor="middle" class="title">Core Innovations</text>
+    
+    <g transform="translate(30, 45)">
+      <rect x="0" y="0" width="340" height="180" rx="8" fill="white" stroke="#FF5722" stroke-width="2"/>
+      <text x="170" y="25" text-anchor="middle" style="font: bold 14px Arial; fill: #FF5722;">MADA: Motion-Aware Difference Attention</text>
+      <text x="20" y="50" style="font: 12px Arial; fill: #333;">1. Temporal Gradient:</text>
+      <text x="30" y="70" style="font: 11px Arial; fill: #666;">D_pre = |I_t - I_{t-1}|</text>
+      <text x="30" y="85" style="font: 11px Arial; fill: #666;">D_next = |I_{t+1} - I_t|</text>
+      <text x="20" y="105" style="font: 12px Arial; fill: #333;">2. Motion Saliency Map:</text>
+      <text x="30" y="125" style="font: 11px Arial; fill: #666;">M_raw = D_pre * D_next</text>
+      <text x="20" y="145" style="font: 12px Arial; fill: #333;">3. Feature Modulation:</text>
+      <text x="30" y="165" style="font: 11px Arial; fill: #666;">I'_t = I_t * (1 + a * sigmoid(F(M_raw)))</text>
+    </g>
+    
+    <g transform="translate(400, 45)">
+      <rect x="0" y="0" width="340" height="180" rx="8" fill="white" stroke="#9C27B0" stroke-width="2"/>
+      <text x="170" y="25" text-anchor="middle" style="font: bold 14px Arial; fill: #9C27B0;">DLCM: Deep Local Contrast Module</text>
+      <text x="20" y="50" style="font: 12px Arial; fill: #333;">1. Background Estimation:</text>
+      <text x="30" y="70" style="font: 11px Arial; fill: #666;">mu_bg = AvgPool_9x9(X)</text>
+      <text x="20" y="95" style="font: 12px Arial; fill: #333;">2. Target Intensity:</text>
+      <text x="30" y="115" style="font: 11px Arial; fill: #666;">L_max = MaxPool_3x3(X)</text>
+      <text x="20" y="140" style="font: 12px Arial; fill: #333;">3. Contrast Response:</text>
+      <text x="30" y="160" style="font: 11px Arial; fill: #666;">C = L_max^2 / (mu_bg + eps)</text>
+      <text x="30" y="175" style="font: 11px Arial; fill: #666;">X_out = X + beta * C</text>
+    </g>
+    
+    <g transform="translate(770, 45)">
+      <rect x="0" y="0" width="340" height="180" rx="8" fill="white" stroke="#3F51B5" stroke-width="2"/>
+      <text x="170" y="25" text-anchor="middle" style="font: bold 14px Arial; fill: #3F51B5;">Hybrid Energy-Preserving Mixer</text>
+      <text x="20" y="50" style="font: 12px Arial; fill: #333;">1. Dual-Path Pooling:</text>
+      <text x="30" y="70" style="font: 11px Arial; fill: #666;">P_max = MaxPool2d(X)</text>
+      <text x="30" y="85" style="font: 11px Arial; fill: #666;">P_avg = AvgPool2d(X)</text>
+      <text x="20" y="110" style="font: 12px Arial; fill: #333;">2. Feature Fusion:</text>
+      <text x="30" y="130" style="font: 11px Arial; fill: #666;">P_hybrid = Concat(P_max, P_avg)</text>
+      <text x="20" y="155" style="font: 12px Arial; fill: #333;">3. Channel Compression:</text>
+      <text x="30" y="175" style="font: 11px Arial; fill: #666;">X_out = X + GELU(Conv1x1(P_hybrid))</text>
+    </g>
+  </g>
+</svg>
