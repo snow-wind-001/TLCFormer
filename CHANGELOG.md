@@ -4,7 +4,7 @@
 
 ---
 
-## [1.0.0] - 2026-01-12 - TLCFormer 完整实现
+## [1.0.0] - 2026-01-12 - TLCFormer 完整实现与发布
 
 ### ✅ 已完成的改进
 
@@ -25,6 +25,18 @@
   - `hybrid_mixer.pdf` - Hybrid Mixer 详细图 (第5页)
 - 包含完整的算法推导和实验分析
 - 所有图片已成功从 SVG 转换为 PDF 格式
+
+### 📚 文档
+
+- 创建了英文 README.md（详细项目说明，使用指南）
+- 创建了中文 README_CN.md（完整中文翻译）
+- 包含安装、使用、配置、引用等完整信息
+
+### 🚀 发布
+
+- 已推送到 GitHub: https://github.com/snow-wind-001/TLCFormer.git
+- 使用 `main` 分支
+- 配置了完整的 `.gitignore` 文件
 
 ---
 
