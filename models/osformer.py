@@ -150,7 +150,10 @@ class OSFormer(nn.Module):
             in_channels=neck_out_channels,  # 256
             num_classes=num_classes,
             num_frames=num_frames,
-            anchor_free=anchor_free
+            sample_frames=sample_frames,
+            anchor_free=anchor_free,
+            cube_channels=2,  # 灰度 + 热红外
+            target_stride=8   # 与 Neck 输出的 stride 匹配
         )
         
         # 初始化权重
@@ -191,7 +194,9 @@ class OSFormer(nn.Module):
                 - 'offset': (B, 2, H', W') 跨帧偏移（除最后一帧）
         """
         # 1. Cube Encoding
-        cube = self.cube_encoder(rgb_frames, thermal_frames)  # (B, 2, H, W, S)
+        cube, all_frames = self.cube_encoder(rgb_frames, thermal_frames)
+        # cube: (B, 2, H, W, S) — 采样帧，用于主干网络
+        # all_frames: (B, 2, H, W, T) — 全部帧，用于 OffsetPredictor
         
         # 2. MADA: 运动感知差分注意力（替代 Doppler Filter）
         if self.use_mada:
@@ -211,7 +216,8 @@ class OSFormer(nn.Module):
         F0 = self.neck(features)  # (B, 256, H/16, W/16)
         
         # 6. Sequence Regression Head - 检测头
-        outputs = self.seq_head(F0)  # List of dict
+        # 传入 all_frames (全部 T 帧) 以便 OffsetPredictor 获取逐帧偏移
+        outputs = self.seq_head(F0, all_frames=all_frames)  # List of dict
         
         return outputs
     

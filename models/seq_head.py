@@ -55,6 +55,71 @@ class LightConv(nn.Module):
         return x
 
 
+
+class TemporalFeatureExtractor(nn.Module):
+    """
+    时间特征提取器
+    从 Cube 张量中为每个采样帧独立提取下采样特征，
+    用于 OffsetPredictor 计算真实的帧间差异
+    
+    参数：
+        cube_channels (int): Cube 的通道数（默认 2: 灰度+热红外）
+        out_channels (int): 输出通道数（匹配 F0 的通道数）
+        target_stride (int): 目标下采样倍率（F0 相对于原图的 stride）
+    """
+    
+    def __init__(
+        self,
+        cube_channels: int = 2,
+        out_channels: int = 256,
+        target_stride: int = 8
+    ):
+        super().__init__()
+        self.cube_channels = cube_channels
+        self.out_channels = out_channels
+        self.target_stride = target_stride
+        
+        # 轻量级下采样网络：将 (B, 2, H, W) 下采样到 (B, out_channels, H/stride, W/stride)
+        # 使用逐步下采样以保留信息
+        layers = []
+        in_ch = cube_channels
+        current_stride = 1
+        
+        # 逐步 stride-2 下采样
+        while current_stride < target_stride:
+            out_ch = min(in_ch * 4, out_channels) if in_ch < out_channels else out_channels
+            layers.append(nn.Conv2d(in_ch, out_ch, kernel_size=3, stride=2, padding=1, bias=False))
+            layers.append(nn.BatchNorm2d(out_ch))
+            layers.append(nn.ReLU(inplace=True))
+            in_ch = out_ch
+            current_stride *= 2
+        
+        # 最终调整通道数
+        if in_ch != out_channels:
+            layers.append(nn.Conv2d(in_ch, out_channels, kernel_size=1, bias=False))
+            layers.append(nn.BatchNorm2d(out_channels))
+            layers.append(nn.ReLU(inplace=True))
+        
+        self.downsample = nn.Sequential(*layers)
+    
+    def forward(self, cube: torch.Tensor) -> List[torch.Tensor]:
+        """
+        参数：
+            cube: (B, C, H, W, S) Cube 张量
+            
+        返回：
+            frame_features: List of (B, out_channels, H', W')，长度为 S
+        """
+        B, C, H, W, S = cube.shape
+        
+        frame_features = []
+        for s in range(S):
+            frame = cube[:, :, :, :, s]  # (B, C, H, W)
+            feat = self.downsample(frame)  # (B, out_channels, H', W')
+            frame_features.append(feat)
+        
+        return frame_features
+
 class OffsetPredictor(nn.Module):
     """
     跨帧偏移预测器
@@ -74,6 +139,7 @@ class OffsetPredictor(nn.Module):
         self.num_frames = num_frames
         
         # 偏移预测分支（预测 x, y 偏移）
+        # 输入: 帧间特征差 (B, in_channels, H, W)
         self.offset_head = nn.Sequential(
             LightConv(in_channels, in_channels // 2),
             LightConv(in_channels // 2, in_channels // 4),
@@ -125,12 +191,16 @@ class SequenceRegressionHead(nn.Module):
         in_channels: int = 256,  # F0 的通道数
         num_classes: int = 1,
         num_frames: int = 5,
-        anchor_free: bool = True
+        sample_frames: int = 3,
+        anchor_free: bool = True,
+        cube_channels: int = 2,
+        target_stride: int = 8
     ):
         super().__init__()
         self.in_channels = in_channels
         self.num_classes = num_classes
         self.num_frames = num_frames
+        self.sample_frames = sample_frames
         self.anchor_free = anchor_free
         
         # 不再需要 FPN 融合！Neck 已经完成了特征融合
@@ -164,18 +234,32 @@ class SequenceRegressionHead(nn.Module):
                 # 推理时需要手动应用 sigmoid
             )
         
+        # 时间特征提取器：从 Cube 中为每帧独立提取特征
+        # 解决 OffsetPredictor 之前收到相同特征的问题
+        temporal_feat_channels = in_channels  # 与 F0 通道数匹配
+        self.temporal_extractor = TemporalFeatureExtractor(
+            cube_channels=cube_channels,
+            out_channels=temporal_feat_channels,
+            target_stride=target_stride
+        )
+        
         # 偏移预测器（用于跨帧关联）
-        self.offset_predictor = OffsetPredictor(in_channels, num_frames)
+        self.offset_predictor = OffsetPredictor(temporal_feat_channels, num_frames)
         
     def forward(
         self, 
-        F0: torch.Tensor
+        F0: torch.Tensor,
+        all_frames: torch.Tensor = None
     ) -> List[Dict[str, torch.Tensor]]:
         """
         前向传播（按论文修改）
         
         参数：
             F0: (B, C0, H, W) Neck 输出的精炼特征
+            all_frames: (B, 2, H_orig, W_orig, T) 全部帧的灰度+热红外张量
+                        用于 TemporalFeatureExtractor 提取逐帧特征，
+                        再由 OffsetPredictor 计算连续帧间偏移。
+                        如果为 None，则退化为旧行为。
                 
         返回：
             outputs: List of dict，长度为 T（帧数）
@@ -200,8 +284,6 @@ class SequenceRegressionHead(nn.Module):
             centerness_pred = None
         
         # 构建输出（每帧）
-        # 注意：这里假设所有帧共享相同的检测头
-        # 实际应用中，可能需要为每帧独立预测
         outputs = []
         for t in range(self.num_frames):
             output = {
@@ -213,11 +295,27 @@ class SequenceRegressionHead(nn.Module):
             outputs.append(output)
         
         # 预测跨帧偏移（用于轨迹关联）
-        # 使用同一特征预测所有帧的偏移
-        offsets = self.offset_predictor([F0] * self.num_frames)
+        if all_frames is not None:
+            # 从全部 T 帧中提取每帧独立的时间特征
+            frame_features = self.temporal_extractor(all_frames)  # List of T x (B, C, H', W')
+            
+            # 确保时间特征的空间尺寸与 F0 一致
+            F0_H, F0_W = F0.shape[2], F0.shape[3]
+            aligned_features = []
+            for feat in frame_features:
+                if feat.shape[2] != F0_H or feat.shape[3] != F0_W:
+                    feat = F.interpolate(feat, size=(F0_H, F0_W), mode='bilinear', align_corners=False)
+                aligned_features.append(feat)
+            
+            # 使用全部 T 帧的特征计算连续帧间偏移
+            offsets = self.offset_predictor(aligned_features)  # (B, T-1, 2, H, W)
+        else:
+            # 向后兼容：无 all_frames 输入时退化为旧行为
+            offsets = self.offset_predictor([F0] * self.num_frames)
         
-        # 将偏移添加到输出
-        for t in range(self.num_frames - 1):
+        # 将偏移添加到输出（T-1 个 offset 对应 T-1 个帧对）
+        num_offsets = offsets.shape[1]  # T-1
+        for t in range(min(num_offsets, self.num_frames - 1)):
             outputs[t]['offset'] = offsets[:, t]  # (B, 2, H, W)
         
         return outputs

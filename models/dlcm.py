@@ -70,7 +70,7 @@ class DeepLocalContrastModule(nn.Module):
 
         # 自适应权重调整（根据输入特征动态调整增强强度）
         self.adaptive_weight = nn.Sequential(
-            nn.AdaptiveAvgPool2d(1),
+            nn.AdaptiveAvgPool2d((1, 1)),
             nn.Conv2d(in_channels, max(in_channels // 4, 1), 1),
             nn.ReLU(inplace=True),
             nn.Conv2d(max(in_channels // 4, 1), in_channels, 1),

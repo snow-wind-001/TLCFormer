@@ -67,7 +67,7 @@ class CubeEncoding(nn.Module):
         self, 
         rgb_frames: torch.Tensor, 
         thermal_frames: torch.Tensor
-    ) -> torch.Tensor:
+    ) -> Tuple[torch.Tensor, torch.Tensor]:
         """
         前向传播
         
@@ -76,9 +76,12 @@ class CubeEncoding(nn.Module):
             thermal_frames: (B, T, 1, H, W) 热红外视频序列
             
         返回：
-            cube: (B, 2, H, W, S) Cube 张量
+            cube: (B, 2, H, W, S) Cube 张量（采样帧，用于主干网络）
                 - cube[:, 0, :, :, :]: 灰度通道
                 - cube[:, 1, :, :, :]: 热红外通道
+            all_frames: (B, 2, H, W, T) 全部帧张量（用于 OffsetPredictor 时间特征提取）
+                - all_frames[:, 0, :, :, :]: 灰度通道
+                - all_frames[:, 1, :, :, :]: 热红外通道
         """
         B, T, C, H, W = rgb_frames.shape
         assert T == self.num_frames, f"输入帧数 {T} 与设置 {self.num_frames} 不匹配"
@@ -99,17 +102,22 @@ class CubeEncoding(nn.Module):
             thermal_frames = (thermal_frames - thermal_frames.mean(dim=(2, 3, 4), keepdim=True)) / \
                            (thermal_frames.std(dim=(2, 3, 4), keepdim=True) + 1e-6)
         
+        # 构建全帧张量: (B, 2, H, W, T) — 用于 OffsetPredictor
+        gray_all = gray_frames.squeeze(2).permute(0, 2, 3, 1)        # (B, H, W, T)
+        thermal_all = thermal_frames.squeeze(2).permute(0, 2, 3, 1)  # (B, H, W, T)
+        all_frames = torch.stack([gray_all, thermal_all], dim=1)      # (B, 2, H, W, T)
+        
         # 时间采样
         gray_sampled = gray_frames[:, self.sample_indices]  # (B, S, 1, H, W)
         thermal_sampled = thermal_frames[:, self.sample_indices]  # (B, S, 1, H, W)
         
-        # 构建 Cube 张量: (B, 2, H, W, S)
+        # 构建 Cube 张量: (B, 2, H, W, S) — 用于主干网络
         gray_sampled = gray_sampled.squeeze(2).permute(0, 2, 3, 1)  # (B, H, W, S)
         thermal_sampled = thermal_sampled.squeeze(2).permute(0, 2, 3, 1)  # (B, H, W, S)
         
         cube = torch.stack([gray_sampled, thermal_sampled], dim=1)  # (B, 2, H, W, S)
         
-        return cube
+        return cube, all_frames
     
     def __call__(self, rgb_frames: torch.Tensor, thermal_frames: torch.Tensor) -> torch.Tensor:
         """支持 transform 管道调用"""
@@ -217,7 +225,7 @@ if __name__ == "__main__":
     rgb_frames = torch.randn(B, T, 3, H, W)
     thermal_frames = torch.randn(B, T, 1, H, W)
     
-    cube = encoder(rgb_frames, thermal_frames)
+    cube, all_frames = encoder(rgb_frames, thermal_frames)
     print(f"输入: RGB {rgb_frames.shape}, Thermal {thermal_frames.shape}")
     print(f"输出 Cube: {cube.shape}")
     print(f"Cube 范围: [{cube.min():.3f}, {cube.max():.3f}]")

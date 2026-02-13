@@ -4,6 +4,106 @@
 
 ---
 
+## [1.1.2] - 2026-02-13 - 仓库精简：移除 paper 文件夹
+
+### 变更
+
+- **移除 `paper/` 文件夹**：LaTeX 源码、PDF、架构图等不再纳入仓库，便于代码仓库聚焦实现与文档。
+- **文档更新**：README.md、README_CN.md 中已删除对 `paper/` 的引用，论文说明改为“未包含在本仓库中”。
+
+---
+
+## [1.1.1] - 2026-02-13 - 修复 Offset 数量不匹配：从全部 T 帧提取时间特征
+
+### 问题
+
+上一版 (1.1.0) 修复了 OffsetPredictor 全零问题，但 offset 数量仅 S-1=2（采样帧数-1），
+而期望 T-1=4（总帧数-1）。原因：`TemporalFeatureExtractor` 从 Cube `(B,2,H,W,S=3)` 提取，
+只有 3 个采样帧，无法覆盖全部 5 帧。
+
+### 修复（方案 4）
+
+**核心思路**：让 `TemporalFeatureExtractor` 从原始全部 T=5 帧中提取特征，而非从 Cube 的 S=3 帧。
+
+| 文件 | 变更 |
+|------|------|
+| `models/cube_encoding.py` | `CubeEncoding.forward` 返回值从 `cube` 改为 `(cube, all_frames)`，新增 `all_frames: (B,2,H,W,T)` |
+| `models/osformer.py` | `OSFormer.forward` 接收 `(cube, all_frames)`，将 `all_frames` 传给 `seq_head` |
+| `models/seq_head.py` | `SequenceRegressionHead.forward` 参数从 `cube` 改为 `all_frames` |
+
+**数据流**：
+```
+CubeEncoding → cube (B,2,H,W,S=3)   → MADA → DLCM → VPA → Neck → F0 (检测用)
+             → all_frames (B,2,H,W,T=5) ────────────────────────→ TemporalFeatureExtractor
+                                                                    → T 个帧特征
+                                                                    → OffsetPredictor
+                                                                    → T-1=4 个 offset
+```
+
+### 验证结果
+
+| 检查项 | 修复前 (v1.1.0) | 修复后 (v1.1.1) |
+|--------|----------------|----------------|
+| Offset 数量 | 2/4 (S-1) | **4/4 (T-1)** |
+| 覆盖帧对 | 0→2, 2→4 (跳帧) | **0→1, 1→2, 2→3, 3→4 (连续)** |
+| Offset 非零 | 全非零 | 全非零 |
+| Offset 互不相同 | 是 | 是 |
+| 主干网络 | 不变 | 不变 |
+| 额外内存 | ~0 | ~13MB (可忽略) |
+| 参数量 | 30.01M | 30.01M (不变) |
+
+---
+
+## [1.1.0] - 2026-02-13 - 修复 OffsetPredictor 帧间偏移预测失效问题
+
+### Bug 修复
+
+**OffsetPredictor 输出全零（致命缺陷）**
+
+- **问题**：`SequenceRegressionHead.forward` 中调用 `self.offset_predictor([F0] * self.num_frames)` 将同一个 F0 复制多次传入 OffsetPredictor。由于 OffsetPredictor 通过 `features[t+1] - features[t]` 计算帧间差，相同的输入导致差值恒为零，所有 offset 预测完全无效。
+- **根因**：5帧输入经 Cube Encoding 采样为 S=3 帧后合并为通道维度 `(B, 2*S, H, W)`，经 VPA + Neck 后变为单帧特征 F0，时间信息丢失。
+- **修复**：新增 `TemporalFeatureExtractor` 模块，从 Cube 张量中为每个采样帧独立提取下采样特征，传入 OffsetPredictor 进行真实的帧间差异计算。
+
+### 网络架构变更
+
+| 组件 | 位置 | 变更 |
+|------|------|------|
+| TemporalFeatureExtractor | `models/seq_head.py` | **新增**：轻量级时间特征提取器（0.073M 参数，仅占总量 0.24%） |
+| SequenceRegressionHead | `models/seq_head.py` | **修改**：`forward` 新增 `cube` 参数，新增 `sample_frames`/`cube_channels`/`target_stride` 初始化参数 |
+| OffsetPredictor | `models/seq_head.py` | **不变**：逻辑本身正确，只是之前接收了错误的输入 |
+| OSFormer | `models/osformer.py` | **修改**：`forward` 传入 `cube` 到 `seq_head`；初始化时传入 `sample_frames` 等参数 |
+
+### TemporalFeatureExtractor 详情
+
+```
+Cube (B, 2, H, W, S) → 分帧提取 → S 个 (B, 2, H, W)
+                                      ↓ 逐步下采样（stride-2 卷积 x3）
+                                    S 个 (B, 256, H/8, W/8)
+                                      ↓ OffsetPredictor 帧差计算
+                                    (B, S-1, 2, H/8, W/8) offset
+```
+
+- 输入通道：2（灰度+热红外）
+- 下采样层：Conv2d(2→8, s=2) → Conv2d(8→32, s=2) → Conv2d(32→128, s=2) → Conv2d(128→256, 1x1)
+- 参数量：0.073M
+- 向后兼容：`cube=None` 时退化为旧行为
+
+### 验证结果
+
+| 检查项 | 修改前 | 修改后 |
+|--------|--------|--------|
+| Frame 0 offset sum | 0.000000 | >1000 (非零) |
+| Frame 1 offset sum | 0.000000 | >1000 (非零) |
+| 输出维度 | 正确 | 正确（不变） |
+| 总参数量 | ~29.94M | ~30.01M (+0.24%) |
+
+### 文档更新
+
+- 更新 README.md 项目结构和架构说明
+- 更新 CHANGELOG.md 添加本次修复记录
+
+---
+
 ## [1.0.0] - 2026-01-12 - TLCFormer 完整实现与发布
 
 ### ✅ 已完成的改进

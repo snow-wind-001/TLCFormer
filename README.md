@@ -21,16 +21,13 @@ Existing methods like OSFormer suffer from detection failures under strong backg
 
 ## 🏗️ Architecture
 
-<p align="center">
-  <img src="paper/figures/architecture.svg" alt="TLCFormer Architecture" width="90%"/>
-</p>
-
 The TLCFormer pipeline consists of:
 - **Cube Encoding**: RGBT multimodal fusion with temporal sampling
 - **MADA**: Motion-aware background suppression
 - **DLCM**: Local contrast enhancement
 - **VPA Encoder**: Multi-scale feature extraction with Hybrid Mixer
 - **Detection Head**: Sequence regression for bounding box prediction
+- **TemporalFeatureExtractor**: Lightweight per-frame feature extraction from Cube for cross-frame offset prediction
 
 ## 🚀 Key Innovations
 
@@ -110,13 +107,10 @@ TLCFormer/
 │   ├── dlcm.py          # Deep Local Contrast Module
 │   ├── vpa.py           # VPA with Hybrid Mixer
 │   ├── cube_encoding.py # Multimodal cube encoding
-│   └── neck.py          # Feature refinement neck
+│   ├── neck.py          # Feature refinement neck
+│   └── seq_head.py      # Sequence head with TemporalFeatureExtractor + OffsetPredictor
 ├── utils/
 │   └── loss.py          # Loss functions (Focal, CIoU, etc.)
-├── paper/
-│   ├── tlcformer.tex    # LaTeX paper source
-│   ├── tlcformer.pdf    # Compiled paper (9 pages)
-│   └── figures/         # Architecture diagrams
 ├── verify_model.py      # Model verification script
 ├── requirements.txt     # Dependencies
 ├── CHANGELOG.md         # Version history
@@ -190,12 +184,7 @@ L_total = λ_cls · L_focal + λ_bbox · L_ciou + λ_center · L_bce
 
 ## 📄 Paper
 
-The complete paper is available at `paper/tlcformer.pdf` (9 pages, ICML 2026 format).
-
-Key sections:
-- Detailed mathematical derivations for MADA, DLCM, and Hybrid Mixer
-- Energy preservation lemma proof
-- Comprehensive experimental analysis
+The paper *"TLCFormer: Synergizing Temporal Motion and Local Contrast for Robust Infrared Video Small Object Detection"* (ICML 2026 format) is not included in this repository. Key sections include detailed derivations for MADA, DLCM, Hybrid Mixer, and experimental analysis.
 
 ## 📈 Results
 

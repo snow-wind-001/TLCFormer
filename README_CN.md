@@ -21,10 +21,6 @@
 
 ## 🏗️ 网络架构
 
-<p align="center">
-  <img src="paper/figures/architecture.svg" alt="TLCFormer 架构" width="90%"/>
-</p>
-
 TLCFormer 处理流程：
 - **立方体编码**: RGBT 多模态融合与时序采样
 - **MADA**: 运动感知背景抑制
@@ -113,10 +109,6 @@ TLCFormer/
 │   └── neck.py          # 特征精炼颈部
 ├── utils/
 │   └── loss.py          # 损失函数（Focal, CIoU 等）
-├── paper/
-│   ├── tlcformer.tex    # LaTeX 论文源码
-│   ├── tlcformer.pdf    # 编译后论文（9页）
-│   └── figures/         # 架构图
 ├── verify_model.py      # 模型验证脚本
 ├── requirements.txt     # 依赖包
 ├── CHANGELOG.md         # 版本历史
@@ -191,12 +183,7 @@ L_total = λ_cls · L_focal + λ_bbox · L_ciou + λ_center · L_bce
 
 ## 📄 论文
 
-完整论文位于 `paper/tlcformer.pdf`（9页，ICML 2026 格式）。
-
-主要内容：
-- MADA、DLCM 和混合混合器的详细数学推导
-- 能量保持引理证明
-- 全面的实验分析
+论文《TLCFormer: Synergizing Temporal Motion and Local Contrast for Robust Infrared Video Small Object Detection》（ICML 2026 格式）未包含在本仓库中。主要内容包括 MADA、DLCM、混合混合器的详细推导与实验分析。
 
 ## 📈 实验结果
 
